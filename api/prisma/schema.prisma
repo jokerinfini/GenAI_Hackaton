@@ -1,0 +1,62 @@
+// datasource and generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Farmer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plots     Plot[]
+}
+
+model Plot {
+  id          String       @id @default(cuid())
+  name        String
+  farmerId    String
+  farmer      Farmer       @relation(fields: [farmerId], references: [id])
+  geometry    Json         // GeoJSON Polygon
+  areaHa      Float
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  treeSamples TreeSample[]
+  calcs       CreditCalc[]
+}
+
+model TreeSample {
+  id        String   @id @default(cuid())
+  plotId    String
+  plot      Plot     @relation(fields: [plotId], references: [id])
+  species   String?
+  dbh_cm    Float
+  createdAt DateTime @default(now())
+}
+
+model CreditCalc {
+  id          String   @id @default(cuid())
+  plotId      String
+  plot        Plot     @relation(fields: [plotId], references: [id])
+  method      String
+  inputs      Json
+  outputs     Json
+  total_tCO2e Float
+  createdAt   DateTime @default(now())
+}
+
+model EmissionFactor {
+  id               String  @id @default(cuid())
+  name             String  @unique
+  a                Float   // allometric parameter
+  b                Float   // allometric exponent
+  root_shoot_ratio Float
+  carbon_fraction  Float
+  co2_conversion   Float
+}

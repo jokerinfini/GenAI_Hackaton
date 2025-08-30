@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: mrv_db
+    environment:
+      POSTGRES_USER: mrv
+      POSTGRES_PASSWORD: mrv
+      POSTGRES_DB: mrv
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./api/prisma/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mrv -d mrv"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: mrv_redis
+    ports:
+      - "6379:6379"
+
+  calc:
+    build: ./calc
+    container_name: mrv_calc
+    ports:
+      - "8000:8000"
+    environment:
+      - UVICORN_HOST=0.0.0.0
+      - UVICORN_PORT=8000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    container_name: mrv_api
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      calc:
+        condition: service_started
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://mrv:mrv@db:5432/mrv?schema=public
+      - REDIS_URL=redis://redis:6379
+      - CALC_URL=http://calc:8000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  dashboard:
+    build: ./dashboard
+    container_name: mrv_dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+
+  mobile:
+    build: ./mobile
+    container_name: mrv_mobile
+    ports:
+      - "8081:8081"
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - API_URL=http://localhost:3001
+
+volumes:
+  db_data:
