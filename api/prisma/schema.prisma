@@ -1,6 +1,7 @@
 // datasource and generator
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -28,6 +29,10 @@ model Plot {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   treeSamples TreeSample[]
+  soilSamples SoilSample[]
+  climateData ClimateData[]
+  managementPractices ManagementPractice[]
+  baselineEmissions BaselineEmission[]
   calcs       CreditCalc[]
 }
 
@@ -38,6 +43,54 @@ model TreeSample {
   species   String?
   dbh_cm    Float
   createdAt DateTime @default(now())
+}
+
+model SoilSample {
+  id                String   @id @default(cuid())
+  plotId            String
+  plot              Plot     @relation(fields: [plotId], references: [id])
+  bulkDensity       Float    // g/cm³
+  soilDepth         Float    // cm (0-30 recommended)
+  carbonConcentration Float  // %
+  clayContent       Float    // %
+  samplingDate      DateTime
+  createdAt         DateTime @default(now())
+}
+
+model ClimateData {
+  id              String   @id @default(cuid())
+  plotId          String
+  plot            Plot     @relation(fields: [plotId], references: [id])
+  month           Int      // 1-12
+  year            Int
+  meanTemperature Float    // °C
+  totalRainfall   Float    // mm
+  evaporation     Float    // mm
+  createdAt       DateTime @default(now())
+}
+
+model ManagementPractice {
+  id              String   @id @default(cuid())
+  plotId          String
+  plot            Plot     @relation(fields: [plotId], references: [id])
+  month           Int
+  year            Int
+  carbonInputs    Float    // t C/ha
+  dpmRpmRatio     Float    // default 1.44
+  soilCover       Boolean  // vegetated/bare
+  fertilizerN     Float    // kg N/ha (for N2O calculation)
+  livestockPresent Boolean // for CH4 calculation
+  createdAt       DateTime @default(now())
+}
+
+model BaselineEmission {
+  id              String   @id @default(cuid())
+  plotId          String
+  plot            Plot     @relation(fields: [plotId], references: [id])
+  n2oEmissions    Float    // kg N2O/ha
+  ch4Emissions    Float    // kg CH4/ha
+  totalCO2e       Float    // t CO2e/ha
+  createdAt       DateTime @default(now())
 }
 
 model CreditCalc {

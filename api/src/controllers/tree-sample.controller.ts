@@ -8,7 +8,8 @@ export class TreeSampleController {
 
   @Post()
   create(@Param('plotId') plotId: string, @Body() createTreeSamplesDto: CreateTreeSamplesDto) {
-    return this.treeSampleService.createMany(plotId, createTreeSamplesDto.trees);
+    console.log('Received tree samples request:', { plotId, body: createTreeSamplesDto });
+    return this.treeSampleService.createMany(plotId, createTreeSamplesDto.trees || []);
   }
 
   @Get()

@@ -6,6 +6,7 @@
     "dev": "npm run start:dev",
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
     "build": "tsc -p tsconfig.json",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",

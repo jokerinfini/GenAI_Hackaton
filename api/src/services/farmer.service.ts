@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { CreateFarmerDto } from '../dto/farmer.dto';
+import { CreateFarmerDto, UpdateFarmerDto } from '../dto/farmer.dto';
 
 @Injectable()
 export class FarmerService {
@@ -31,6 +31,19 @@ export class FarmerService {
           },
         },
       },
+    });
+  }
+
+  async update(id: string, updateFarmerDto: UpdateFarmerDto) {
+    return this.prisma.farmer.update({
+      where: { id },
+      data: updateFarmerDto,
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.farmer.delete({
+      where: { id },
     });
   }
 }
